@@ -1,0 +1,53 @@
+# ============================================================
+#  Macias Têxtil — Apache / Plesk   (cache · compressão · headers)
+#  Site estático. HTML sempre fresco; assets com cache longo.
+#  Todas as diretivas são protegidas por <IfModule> — se um
+#  módulo não existir, a regra é ignorada (não derruba o site).
+# ============================================================
+
+# ---------- Compressão ----------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml application/javascript application/json application/xml image/svg+xml
+</IfModule>
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/css application/javascript application/json application/xml image/svg+xml
+</IfModule>
+
+# ---------- Validade (mod_expires) ----------
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp             "access plus 1 year"
+  ExpiresByType image/png              "access plus 1 year"
+  ExpiresByType image/x-icon           "access plus 1 year"
+  ExpiresByType image/svg+xml          "access plus 1 year"
+  ExpiresByType font/woff2             "access plus 1 year"
+  ExpiresByType text/css               "access plus 1 day"
+  ExpiresByType application/javascript "access plus 1 day"
+  ExpiresByType text/html              "access plus 0 seconds"
+</IfModule>
+
+# ---------- Cache-Control + segurança (mod_headers) ----------
+<IfModule mod_headers.c>
+  # Imagens/fontes: raramente mudam (e quando muda, é nome novo) -> 1 ano imutável
+  <FilesMatch "\.(webp|png|ico|svg|woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  # CSS/JS: editados no lugar -> 1 dia (atualiza rápido após deploy)
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=86400"
+  </FilesMatch>
+  # HTML: sempre revalidar (deploys aparecem na hora)
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  # Headers de segurança (leves e seguros)
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ---------- MIME (garante webp/woff2) ----------
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType font/woff2 .woff2
+</IfModule>
